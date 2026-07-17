@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Network Topology - Interactive Lab</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1724; --surface: #1a2332; --surface2: #243044;
+    --border: #2d3f56; --text: #e2e8f0; --muted: #8899aa;
+    --accent: #38bdf8; --green: #4ade80; --red: #f87171;
+    --orange: #fb923c; --purple: #a78bfa; --yellow: #facc15;
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Header ── */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 1.3rem; font-weight: 600; }
+  header h1 span { color: var(--accent); }
+  .header-tabs { display: flex; gap: 4px; margin-left: auto; }
+  .header-tabs button { background: transparent; color: var(--muted); border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all .2s; }
+  .header-tabs button.active, .header-tabs button:hover { background: var(--surface2); color: var(--text); }
+
+  /* ── Layout ── */
+  .app { display: flex; height: calc(100vh - 53px); }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 280px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+  .sidebar h3 { padding: 16px 16px 8px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .device-list { list-style: none; }
+  .device-list li { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all .15s; border-left: 3px solid transparent; }
+  .device-list li:hover { background: var(--surface2); }
+  .device-list li.active { background: var(--surface2); border-left-color: var(--accent); }
+  .device-list .icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+  .device-list .info { flex: 1; min-width: 0; }
+  .device-list .info .name { font-size: 0.85rem; font-weight: 500; }
+  .device-list .info .type { font-size: 0.7rem; color: var(--muted); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.up { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .status-dot.down { background: var(--red); }
+
+  /* ── Topology Canvas ── */
+  .topology-area { flex: 1; position: relative; overflow: hidden; }
+  .topology-area svg { width: 100%; height: 100%; }
+  .topo-node { cursor: pointer; transition: filter .2s; }
+  .topo-node:hover { filter: brightness(1.2) drop-shadow(0 0 8px rgba(56,189,248,.4)); }
+  .topo-node.selected { filter: drop-shadow(0 0 12px rgba(56,189,248,.6)); }
+  .topo-label { font-size: 11px; fill: var(--text); text-anchor: middle; pointer-events: none; font-family: 'Segoe UI', system-ui; }
+  .topo-link { stroke: #2d4a6f; stroke-width: 2; }
+  .topo-link.active-flow { stroke: var(--accent); stroke-width: 2; opacity: .6; stroke-dasharray: 8 4; animation: flowAnim 1s linear infinite; }
+  @keyframes flowAnim { to { stroke-dashoffset: -12; } }
+  .topo-legend { position: absolute; bottom: 16px; left: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 0.75rem; }
+  .topo-legend h4 { margin-bottom: 8px; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+  .topo-legend .item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .topo-legend .swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* ── Config Panel ── */
+  .config-panel { width: 520px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: width .3s; }
+  .config-panel.collapsed { width: 0; border: none; }
+  .config-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .config-header .device-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .config-header .details h2 { font-size: 1rem; font-weight: 600; }
+  .config-header .details p { font-size: 0.75rem; color: var(--muted); }
+  .config-close { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.2rem; padding: 4px; }
+  .config-close:hover { color: var(--text); }
+  .config-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .config-tabs button { flex: 1; padding: 10px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; border-bottom: 2px solid transparent; transition: all .2s; }
+  .config-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .config-body { flex: 1; overflow-y: auto; padding: 16px; display: none; }
+  /* Split view: commands + terminal side by side vertically */
+  .config-split { flex: 1; display: none; flex-direction: column; overflow: hidden; min-height: 0; }
+  .config-split.active { display: flex; }
+  .config-body.active { display: block; }
+  .split-commands { flex: 1; overflow-y: auto; padding: 16px; border-bottom: 1px solid var(--border); min-height: 120px; }
+  .split-divider { height: 6px; background: var(--surface2); cursor: row-resize; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .split-divider::after { content: ""; width: 40px; height: 3px; background: var(--border); border-radius: 2px; }
+  .split-divider:hover { background: var(--accent); opacity: .3; }
+  .split-terminal { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 12px; min-height: 160px; }
+  .split-terminal .terminal-box { flex: 1; display: flex; flex-direction: column; margin-bottom: 0; }
+  .split-terminal .terminal-output { flex: 1; max-height: none; overflow-y: auto; }
+
+  /* ── Terminal ── */
+  .terminal-box { background: #0a0e14; border: 1px solid var(--border); border-radius: 8px; font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 0.8rem; overflow: hidden; margin-bottom: 16px; }
+  .terminal-header { background: #141a22; padding: 6px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  .terminal-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .terminal-header .dot.r { background: #f87171; } .terminal-header .dot.y { background: #facc15; } .terminal-header .dot.g { background: #4ade80; }
+  .terminal-header span { color: var(--muted); font-size: 0.7rem; margin-left: 8px; }
+  .terminal-output { padding: 12px; max-height: 300px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+  .terminal-output .prompt { color: var(--green); }
+  .terminal-output .cmd { color: var(--yellow); }
+  .terminal-output .comment { color: #5a6a7a; }
+  .terminal-output .output { color: #8899aa; }
+  .terminal-output .highlight { color: var(--accent); }
+  .terminal-input-wrap { display: flex; align-items: center; padding: 8px 12px; border-top: 1px solid #1a2332; background: #0d1219; }
+  .terminal-input-wrap .prompt-char { color: var(--green); margin-right: 8px; font-family: inherit; font-size: 0.8rem; white-space: pre; }
+  .terminal-input { flex: 1; background: none; border: none; color: var(--text); font-family: inherit; font-size: 0.8rem; outline: none; }
+
+  /* ── Info Cards ── */
+  .info-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .info-card h4 { font-size: 0.8rem; margin-bottom: 8px; color: var(--accent); }
+  .info-card p, .info-card li { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+  .info-card ul { list-style: none; padding: 0; }
+  .info-card li::before { content: "\203A"; color: var(--accent); margin-right: 8px; }
+  .info-card table { width: 100%; font-size: 0.78rem; border-collapse: collapse; }
+  .info-card th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .info-card td { padding: 4px 0; color: var(--text); }
+
+  .cmd-guide h4 { font-size: 0.82rem; color: var(--accent); margin-bottom: 10px; }
+  .cmd-step { margin-bottom: 14px; }
+  .cmd-step .step-title { font-size: 0.78rem; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .cmd-step .step-num { background: var(--accent); color: var(--bg); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; flex-shrink: 0; }
+  .cmd-step .step-desc { font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
+  .cmd-block { background: #0a0e14; border-radius: 6px; padding: 10px 12px; font-family: 'Cascadia Code', monospace; font-size: 0.78rem; color: var(--yellow); cursor: pointer; position: relative; white-space: pre-wrap; }
+  .cmd-block:hover { background: #0e1319; }
+  .cmd-block::after { content: "click to run"; position: absolute; right: 8px; top: 8px; font-size: 0.6rem; color: var(--muted); font-family: 'Segoe UI', system-ui; }
+
+  /* ── Guide Page ── */
+  .guide-page { display: none; flex: 1; overflow-y: auto; padding: 40px; max-width: 900px; margin: 0 auto; }
+  .guide-page.active { display: block; }
+  .guide-page h2 { font-size: 1.5rem; margin-bottom: 8px; }
+  .guide-page .subtitle { color: var(--muted); margin-bottom: 32px; font-size: 0.9rem; }
+  .guide-section { margin-bottom: 32px; }
+  .guide-section h3 { font-size: 1.1rem; margin-bottom: 12px; color: var(--accent); }
+  .guide-section p { font-size: 0.88rem; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+  .guide-code { background: #0a0e14; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: monospace; font-size: 0.82rem; color: var(--yellow); line-height: 1.7; margin-bottom: 16px; white-space: pre-wrap; }
+  .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .guide-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .guide-card .gc-icon { font-size: 2rem; margin-bottom: 10px; }
+  .guide-card h4 { font-size: 0.95rem; margin-bottom: 6px; }
+  .guide-card p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Tooltip ── */
+  .tooltip { position: fixed; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 0.75rem; color: var(--text); pointer-events: none; z-index: 100; max-width: 220px; box-shadow: 0 4px 20px rgba(0,0,0,.4); display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&#127760; <span>NetLab</span> &mdash; Business Network Topology</h1>
+  <div class="header-tabs">
+    <button class="active" onclick="showView('topology')">Topology</button>
+    <button onclick="showView('guide')">Learning Guide</button>
+  </div>
+</header>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar-topo">
+    <h3>Network Devices</h3>
+    <ul class="device-list" id="deviceList"></ul>
+  </div>
+
+  <!-- Topology View -->
+  <div class="topology-area" id="topoView">
+    <svg id="topoSvg" viewBox="0 0 1000 700"></svg>
+    <div class="topo-legend">
+      <h4>Legend</h4>
+      <div class="item"><div class="swatch" style="background:#f87171"></div> Firewall</div>
+      <div class="item"><div class="swatch" style="background:#38bdf8"></div> Router</div>
+      <div class="item"><div class="swatch" style="background:#a78bfa"></div> Switch</div>
+      <div class="item"><div class="swatch" style="background:#fb923c"></div> Load Balancer</div>
+      <div class="item"><div class="swatch" style="background:#4ade80"></div> Access Point / Server</div>
+      <div class="item"><div class="swatch" style="background:#94a3b8"></div> Client Device</div>
+    </div>
+  </div>
+
+  <!-- Config Panel -->
+  <div class="config-panel collapsed" id="configPanel">
+    <div class="config-header">
+      <div class="device-icon" id="cfgIcon"></div>
+      <div class="details">
+        <h2 id="cfgName"></h2>
+        <p id="cfgType"></p>
+      </div>
+      <button class="config-close" onclick="closeConfig()">&times;</button>
+    </div>
+    <div class="config-tabs">
+      <button class="active" onclick="switchConfigTab(this,'info')">Overview</button>
+      <button onclick="switchConfigTab(this,'split')">Commands + Terminal</button>
+    </div>
+    <div class="config-body" id="cfgBody"></div>
+    <div class="config-split" id="cfgSplit">
+      <div class="split-commands" id="splitCmds"></div>
+      <div class="split-divider" id="splitDivider"></div>
+      <div class="split-terminal" id="splitTerm"></div>
+    </div>
+  </div>
+
+  <!-- Learning Guide View -->
+  <div class="guide-page" id="guideView">
+    <h2>Network Fundamentals Guide</h2>
+    <p class="subtitle">Learn how business networks work, one device at a time.</p>
+
+    <div class="guide-section">
+      <h3>What Is a Network Topology?</h3>
+      <p>A network topology is the arrangement of devices (nodes) and connections (links) in a computer network. In a business setting, the topology is designed for <strong>security</strong>, <strong>performance</strong>, and <strong>reliability</strong>. The topology shown in this lab follows a common hierarchical model used in small-to-medium businesses.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3>Key Devices Explained</h3>
+      <div class="guide-grid">
+        <div class="guide-card"><div class="gc-icon">&#127758;</div><h4>Edge Router</h4><p>Connects your business network to the Internet (ISP). It routes traffic between your internal network and the outside world using routing protocols and NAT.</p></div>
+        <div class="guide-card"><div class="gc-icon">&#128737;&#65039;</div><h4>Firewall</h4><p>Acts as a security barrier. It inspects all incoming and outgoing traffic and blocks anything that doesn't match your security policies (rules).</p></div>
+        <div class="guide-card"><div class="gc-icon">&#128256;</div><h4>Core Switch</h4><p>The high-speed backbone of your internal network. It connects all major segments together &mdash; servers, office floors, and other switches.</p></div>
+        <div class="guide-card"><div class="gc-icon">&#9878;&#65039;</div><h4>Load Balancer</h4><p>Distributes incoming requests (e.g.&nbsp;web traffic) across multiple servers so no single server gets overwhelmed. Ensures high availability.</p></div>
+        <div class="guide-card"><div class="gc-icon">&#128268;</div><h4>Access Switch</h4><p>Provides network ports for end-user devices on each office floor. Supports VLANs to segment traffic (e.g.&nbsp;separating HR from Engineering).</p></div>
+        <div class="guide-card"><div class="gc-icon">&#128225;</div><h4>Wireless Access Point</h4><p>Provides Wi-Fi connectivity for laptops, phones, and tablets. Managed by a controller or configured individually with SSIDs and security.</p></div>
+        <div class="guide-card"><div class="gc-icon">&#128421;&#65039;</div><h4>Servers</h4><p>Run business applications &mdash; web servers, databases, file shares, email. Typically placed in a server room behind the load balancer.</p></div>
+        <div class="guide-card"><div class="gc-icon">&#128187;</div><h4>Client PCs</h4><p>End-user workstations. They get IP addresses via DHCP, connect to file servers, and access the Internet through the network infrastructure.</p></div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h3>How Traffic Flows</h3>
+      <p>When a user on Floor 1 opens a website:</p>
+      <div class="guide-code">1. PC sends request  &#8594;  Access Switch (Floor 1)
+2. Access Switch     &#8594;  Core Switch
+3. Core Switch       &#8594;  Firewall (inspects outbound traffic)
+4. Firewall          &#8594;  Edge Router
+5. Edge Router       &#8594;  Internet (ISP)
+6. Response follows the reverse path back to the PC</div>
+      <p>When accessing an internal web app:</p>
+      <div class="guide-code">1. PC sends request  &#8594;  Access Switch  &#8594;  Core Switch
+2. Core Switch       &#8594;  Load Balancer
+3. Load Balancer     &#8594;  Web Server 1 or 2 (round-robin)
+4. Server responds   &#8594;  Load Balancer  &#8594;  Core Switch  &#8594;  PC</div>
+    </div>
+
+    <div class="guide-section">
+      <h3>Essential CLI Command Modes (Cisco IOS)</h3>
+      <p>Most business network devices use a command-line interface (CLI). Here is how Cisco IOS modes work:</p>
+      <div class="guide-code">Router>                     &larr; User EXEC mode (limited commands)
+Router> enable
+Router#                     &larr; Privileged EXEC mode (full access)
+Router# configure terminal
+Router(config)#             &larr; Global Configuration mode
+Router(config)# interface g0/0
+Router(config-if)#          &larr; Interface Configuration mode
+Router(config-if)# exit
+Router(config)# exit
+Router# show running-config &larr; View current configuration</div>
+    </div>
+
+    <div class="guide-section">
+      <h3>VLANs &mdash; Why They Matter</h3>
+      <p>VLANs (Virtual LANs) let you segment one physical switch into multiple logical networks. This improves <strong>security</strong> (HR can't see Engineering traffic) and <strong>performance</strong> (less broadcast traffic).</p>
+      <div class="guide-code">Switch(config)# vlan 10
+Switch(config-vlan)# name ENGINEERING
+Switch(config)# vlan 20
+Switch(config-vlan)# name HR
+Switch(config)# interface range fa0/1-12
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 10
+Switch(config)# interface range fa0/13-24
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 20</div>
+    </div>
+
+    <div class="guide-section">
+      <h3>Subnetting Quick Reference</h3>
+      <p>Business networks typically use private IP ranges split into subnets:</p>
+      <div class="guide-code">Network: 10.0.0.0/8       (Large enterprises)
+Network: 172.16.0.0/12    (Medium businesses)
+Network: 192.168.0.0/16   (Small businesses)
+
+Example subnets for this topology:
+  Management VLAN:  192.168.1.0/24   (Switches, Router, Firewall)
+  Servers:          192.168.10.0/24
+  Engineering:      192.168.20.0/24
+  HR / Admin:       192.168.30.0/24
+  Wi-Fi / Guest:    192.168.40.0/24</div>
+    </div>
+
+    <div class="guide-section">
+      <h3>Tips for Beginners</h3>
+      <p>1. <strong>Always save your config</strong> &mdash; Use <code>write memory</code> or <code>copy running-config startup-config</code>.</p>
+      <p>2. <strong>Use "?" for help</strong> &mdash; Typing <code>?</code> at any prompt shows available commands.</p>
+      <p>3. <strong>Start from the edge</strong> &mdash; Configure the router and firewall first, then work inward to switches and endpoints.</p>
+      <p>4. <strong>Test connectivity</strong> &mdash; Use <code>ping</code> and <code>traceroute</code> to verify your setup.</p>
+      <p>5. <strong>Document everything</strong> &mdash; Keep a spreadsheet of IP addresses, VLANs, and port assignments.</p>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+/* ======================================================================
+   DEVICE DATA — every device in the topology
+   ====================================================================== */
+var devices = [
+  {
+    id:"internet", name:"Internet (ISP)", type:"cloud", color:"#64748b", emoji:"\u2601\uFE0F",
+    x:500, y:40,
+    desc:"Your Internet Service Provider connection. This is the gateway to the outside world.",
+    specs:{"Connection":"1 Gbps Fiber","Public IP":"203.0.113.1/30","Provider":"Business ISP"},
+    commands:[],
+    guide:"The Internet cloud represents your ISP uplink. Your ISP provides the public IP and gateway."
+  },
+  {
+    id:"edge-router", name:"Edge Router", type:"router", color:"#38bdf8", emoji:"\uD83C\uDF0D",
+    x:500, y:140, status:"up",
+    desc:"Cisco ISR 4321 \u2014 Routes traffic between your internal network and the ISP. Performs NAT so internal devices can access the Internet.",
+    specs:{"Model":"Cisco ISR 4321","IOS":"16.9.4","Mgmt IP":"192.168.1.1","WAN IP":"203.0.113.2/30","LAN IP":"192.168.1.1/24","Default Route":"203.0.113.1"},
+    commands:[
+      {title:"Set the hostname",desc:"Give the router a meaningful name.",cmd:"enable\nconfigure terminal\nhostname EdgeRouter"},
+      {title:"Configure WAN interface (to ISP)",desc:"Assign the public IP given by your ISP to the WAN-facing interface.",cmd:"interface GigabitEthernet0/0\n ip address 203.0.113.2 255.255.255.252\n no shutdown\n exit"},
+      {title:"Configure LAN interface (to Firewall)",desc:"Assign the internal gateway IP on the LAN side.",cmd:"interface GigabitEthernet0/1\n ip address 192.168.1.1 255.255.255.0\n no shutdown\n exit"},
+      {title:"Set default route to ISP",desc:"Send all unknown traffic to the ISP gateway.",cmd:"ip route 0.0.0.0 0.0.0.0 203.0.113.1"},
+      {title:"Enable NAT (Internet for LAN)",desc:"NAT translates private IPs to your public IP so internal hosts reach the Internet.",cmd:"interface GigabitEthernet0/0\n ip nat outside\n exit\ninterface GigabitEthernet0/1\n ip nat inside\n exit\naccess-list 1 permit 192.168.0.0 0.0.255.255\nip nat inside source list 1 interface GigabitEthernet0/0 overload"},
+      {title:"Save configuration",desc:"Write running-config to NVRAM.",cmd:"end\nwrite memory"}
+    ],
+    guide:"The edge router is the first device to configure. It connects your business to the Internet and handles NAT."
+  },
+  {
+    id:"firewall", name:"Firewall", type:"firewall", color:"#f87171", emoji:"\uD83D\uDEE1\uFE0F",
+    x:500, y:250, status:"up",
+    desc:"Cisco ASA 5506 \u2014 Inspects and filters all traffic entering and leaving the network. Blocks unauthorized access.",
+    specs:{"Model":"Cisco ASA 5506-X","OS":"ASA 9.12","Outside IP":"192.168.1.2/24","Inside IP":"10.0.0.1/24","DMZ IP":"172.16.0.1/24"},
+    commands:[
+      {title:"Set hostname",desc:"Name the firewall.",cmd:"enable\nconfigure terminal\nhostname ASA-FW"},
+      {title:"Configure Outside interface",desc:"Connect to the edge router (security-level 0 = least trusted).",cmd:"interface GigabitEthernet1/1\n nameif outside\n security-level 0\n ip address 192.168.1.2 255.255.255.0\n no shutdown\n exit"},
+      {title:"Configure Inside interface",desc:"Connect to internal network (security-level 100 = most trusted).",cmd:"interface GigabitEthernet1/2\n nameif inside\n security-level 100\n ip address 10.0.0.1 255.255.255.0\n no shutdown\n exit"},
+      {title:"Set default route",desc:"Route unknown traffic to the edge router.",cmd:"route outside 0.0.0.0 0.0.0.0 192.168.1.1"},
+      {title:"Allow outbound Internet",desc:"Permit internal users to access the Internet.",cmd:"access-list INSIDE-OUT extended permit ip 10.0.0.0 255.255.0.0 any\naccess-group INSIDE-OUT in interface inside"},
+      {title:"Allow inbound HTTP to servers",desc:"Permit web traffic from outside.",cmd:"access-list OUTSIDE-IN extended permit tcp any host 203.0.113.2 eq 80\naccess-list OUTSIDE-IN extended permit tcp any host 203.0.113.2 eq 443\naccess-group OUTSIDE-IN in interface outside"},
+      {title:"Enable logging",desc:"Log security events.",cmd:"logging enable\nlogging buffered informational"},
+      {title:"Save configuration",desc:"Persist to flash.",cmd:"write memory"}
+    ],
+    guide:"The firewall is your primary security device. Traffic from inside to outside is allowed by default; you need ACLs to control inbound traffic."
+  },
+  {
+    id:"core-switch", name:"Core Switch", type:"switch", color:"#a78bfa", emoji:"\uD83D\uDD00",
+    x:500, y:370, status:"up",
+    desc:"Cisco Catalyst 3850 \u2014 The backbone connecting all segments. Supports VLANs and inter-VLAN routing.",
+    specs:{"Model":"Catalyst 3850-48T","IOS":"16.6.5","Mgmt IP":"10.0.0.2/24","VLANs":"10, 20, 30, 40","Ports":"48\u00D71GbE + 4\u00D710GbE"},
+    commands:[
+      {title:"Set hostname",desc:"Name the core switch.",cmd:"enable\nconfigure terminal\nhostname CoreSwitch"},
+      {title:"Create VLANs",desc:"Set up VLANs for departments.",cmd:"vlan 10\n name SERVERS\nvlan 20\n name ENGINEERING\nvlan 30\n name HR-ADMIN\nvlan 40\n name WIFI-GUEST\nexit"},
+      {title:"Trunk to firewall",desc:"Carry all VLANs to the firewall.",cmd:"interface GigabitEthernet1/0/1\n switchport mode trunk\n switchport trunk allowed vlan 10,20,30,40\n no shutdown\n exit"},
+      {title:"Trunk to Access Switch 1",desc:"Link to Floor 1 switch.",cmd:"interface GigabitEthernet1/0/2\n switchport mode trunk\n switchport trunk allowed vlan 20,30,40\n no shutdown\n exit"},
+      {title:"Trunk to Access Switch 2",desc:"Link to Floor 2 switch.",cmd:"interface GigabitEthernet1/0/3\n switchport mode trunk\n switchport trunk allowed vlan 20,30,40\n no shutdown\n exit"},
+      {title:"Inter-VLAN routing (SVIs)",desc:"Create switch virtual interfaces so VLANs can communicate.",cmd:"ip routing\ninterface vlan 10\n ip address 10.0.10.1 255.255.255.0\n no shutdown\ninterface vlan 20\n ip address 10.0.20.1 255.255.255.0\n no shutdown\ninterface vlan 30\n ip address 10.0.30.1 255.255.255.0\n no shutdown\ninterface vlan 40\n ip address 10.0.40.1 255.255.255.0\n no shutdown"},
+      {title:"Default gateway",desc:"Point to the firewall.",cmd:"ip default-gateway 10.0.0.1"},
+      {title:"Save",desc:"Persist.",cmd:"end\nwrite memory"}
+    ],
+    guide:"The core switch is the heart of your LAN. Create VLANs here, then trunk them to access switches."
+  },
+  {
+    id:"load-balancer", name:"Load Balancer", type:"loadbalancer", color:"#fb923c", emoji:"\u2696\uFE0F",
+    x:300, y:370, status:"up",
+    desc:"HAProxy \u2014 Distributes incoming web requests across backend servers for high availability.",
+    specs:{"Type":"HAProxy","VIP":"10.0.10.100","Pool":"WebSrv1, WebSrv2","Algorithm":"Round Robin","Health Check":"HTTP /health"},
+    commands:[
+      {title:"Install HAProxy",desc:"Install the load balancer.",cmd:"sudo apt update\nsudo apt install haproxy -y"},
+      {title:"Configure frontend",desc:"Define the listener in /etc/haproxy/haproxy.cfg.",cmd:"# /etc/haproxy/haproxy.cfg\nfrontend web_front\n    bind *:80\n    default_backend web_servers"},
+      {title:"Configure backend pool",desc:"Define servers and balancing algorithm.",cmd:"backend web_servers\n    balance roundrobin\n    option httpchk GET /health\n    server web1 10.0.10.10:80 check\n    server web2 10.0.10.11:80 check"},
+      {title:"Start HAProxy",desc:"Enable and start the service.",cmd:"sudo systemctl enable haproxy\nsudo systemctl start haproxy\nsudo systemctl status haproxy"},
+      {title:"Test",desc:"Verify traffic distribution.",cmd:"curl http://10.0.10.100"}
+    ],
+    guide:"The load balancer receives all web requests and distributes them across healthy backend servers."
+  },
+  {
+    id:"web-server1", name:"Web Server 1", type:"server", color:"#4ade80", emoji:"\uD83D\uDDA5\uFE0F",
+    x:180, y:470, status:"up",
+    desc:"Ubuntu server running Nginx \u2014 hosts the company web application.",
+    specs:{"OS":"Ubuntu 22.04","IP":"10.0.10.10/24","VLAN":"10 (Servers)","Service":"Nginx","Resources":"4 vCPU / 8 GB"},
+    commands:[
+      {title:"Set static IP",desc:"Configure via Netplan.",cmd:"# /etc/netplan/00-config.yaml\nnetwork:\n  ethernets:\n    ens33:\n      addresses: [10.0.10.10/24]\n      gateway4: 10.0.10.1\n      nameservers:\n        addresses: [8.8.8.8]\n\nsudo netplan apply"},
+      {title:"Install Nginx",desc:"Install the web server.",cmd:"sudo apt update\nsudo apt install nginx -y\nsudo systemctl enable nginx"},
+      {title:"Verify",desc:"Check it is running.",cmd:"sudo systemctl status nginx\ncurl http://localhost"}
+    ],
+    guide:"Web servers host your applications. They receive traffic via the load balancer."
+  },
+  {
+    id:"web-server2", name:"Web Server 2", type:"server", color:"#4ade80", emoji:"\uD83D\uDDA5\uFE0F",
+    x:420, y:470, status:"up",
+    desc:"Second Nginx server for redundancy.",
+    specs:{"OS":"Ubuntu 22.04","IP":"10.0.10.11/24","VLAN":"10 (Servers)","Service":"Nginx","Resources":"4 vCPU / 8 GB"},
+    commands:[
+      {title:"Set static IP",desc:"Different IP from Server 1.",cmd:"# /etc/netplan/00-config.yaml\nnetwork:\n  ethernets:\n    ens33:\n      addresses: [10.0.10.11/24]\n      gateway4: 10.0.10.1\n      nameservers:\n        addresses: [8.8.8.8]\n\nsudo netplan apply"},
+      {title:"Install Nginx",desc:"Same setup as Server 1.",cmd:"sudo apt update\nsudo apt install nginx -y\nsudo systemctl enable nginx"},
+      {title:"Verify",desc:"Confirm running.",cmd:"sudo systemctl status nginx\ncurl http://localhost"}
+    ],
+    guide:"A second server provides redundancy. If Server 1 fails, the load balancer automatically uses Server 2."
+  },
+  {
+    id:"access-switch1", name:"Access Switch \u2014 Floor 1", type:"switch", color:"#a78bfa", emoji:"\uD83D\uDD0C",
+    x:680, y:470, status:"up",
+    desc:"Cisco Catalyst 2960 \u2014 Provides ports for Floor 1 desktops. VLANs for Engineering and HR.",
+    specs:{"Model":"Catalyst 2960-24TT","Mgmt IP":"10.0.20.2/24","Ports":"24\u00D71GbE","VLANs":"20 (Eng), 30 (HR)"},
+    commands:[
+      {title:"Set hostname",desc:"Name this switch.",cmd:"enable\nconfigure terminal\nhostname AccSwitch-F1"},
+      {title:"Trunk uplink",desc:"To core switch.",cmd:"interface GigabitEthernet0/1\n switchport mode trunk\n switchport trunk allowed vlan 20,30,40\n no shutdown\n exit"},
+      {title:"Engineering ports",desc:"Ports 2-12 on VLAN 20.",cmd:"interface range FastEthernet0/2-12\n switchport mode access\n switchport access vlan 20\n spanning-tree portfast\n no shutdown\n exit"},
+      {title:"HR ports",desc:"Ports 13-20 on VLAN 30.",cmd:"interface range FastEthernet0/13-20\n switchport mode access\n switchport access vlan 30\n no shutdown\n exit"},
+      {title:"Port security",desc:"Limit one MAC per port.",cmd:"interface range FastEthernet0/2-20\n switchport port-security\n switchport port-security maximum 1\n switchport port-security violation shutdown\n exit"},
+      {title:"Save",desc:"Persist.",cmd:"end\nwrite memory"}
+    ],
+    guide:"Access switches connect end-user devices. Each port is assigned to a VLAN based on department."
+  },
+  {
+    id:"access-switch2", name:"Access Switch \u2014 Floor 2", type:"switch", color:"#a78bfa", emoji:"\uD83D\uDD0C",
+    x:820, y:370, status:"up",
+    desc:"Cisco Catalyst 2960 \u2014 Floor 2 desktops and wireless AP uplink.",
+    specs:{"Model":"Catalyst 2960-24TT","Mgmt IP":"10.0.20.3/24","Ports":"24\u00D71GbE","VLANs":"20 (Eng), 40 (WiFi)"},
+    commands:[
+      {title:"Set hostname",desc:"Name this switch.",cmd:"enable\nconfigure terminal\nhostname AccSwitch-F2"},
+      {title:"Trunk uplink",desc:"To core switch.",cmd:"interface GigabitEthernet0/1\n switchport mode trunk\n switchport trunk allowed vlan 20,30,40\n no shutdown\n exit"},
+      {title:"Engineering ports",desc:"Floor 2 engineering.",cmd:"interface range FastEthernet0/2-16\n switchport mode access\n switchport access vlan 20\n spanning-tree portfast\n no shutdown\n exit"},
+      {title:"AP trunk port",desc:"Access point on port 24.",cmd:"interface FastEthernet0/24\n switchport mode trunk\n switchport trunk allowed vlan 20,40\n no shutdown\n exit"},
+      {title:"Save",desc:"Persist.",cmd:"end\nwrite memory"}
+    ],
+    guide:"This switch serves Floor 2 and provides the uplink for the wireless access point."
+  },
+  {
+    id:"access-point", name:"Wireless Access Point", type:"ap", color:"#4ade80", emoji:"\uD83D\uDCE1",
+    x:920, y:470, status:"up",
+    desc:"Cisco Aironet \u2014 Provides Wi-Fi with separate SSIDs mapped to VLANs.",
+    specs:{"Model":"Cisco Aironet 2802i","Mgmt IP":"10.0.40.10","SSID 1":"CorpNet (VLAN 20)","SSID 2":"GuestWiFi (VLAN 40)","Security":"WPA2-Enterprise / WPA2-PSK"},
+    commands:[
+      {title:"Access AP CLI",desc:"SSH into the access point.",cmd:"ssh admin@10.0.40.10"},
+      {title:"Corporate SSID",desc:"Employee Wi-Fi on VLAN 20.",cmd:"configure terminal\ndot11 ssid CorpNet\n vlan 20\n authentication open\n authentication key-management wpa version 2\n wpa-psk ascii SecureCorpPass!\n guest-mode\n exit"},
+      {title:"Guest SSID",desc:"Guest network on VLAN 40.",cmd:"dot11 ssid GuestWiFi\n vlan 40\n authentication open\n authentication key-management wpa version 2\n wpa-psk ascii GuestAccess2024!\n guest-mode\n exit"},
+      {title:"Apply to radios",desc:"Bind SSIDs to 2.4 GHz and 5 GHz.",cmd:"interface dot11Radio0\n ssid CorpNet\n ssid GuestWiFi\n no shutdown\ninterface dot11Radio1\n ssid CorpNet\n ssid GuestWiFi\n no shutdown\n exit"},
+      {title:"Save",desc:"Persist.",cmd:"end\nwrite memory"}
+    ],
+    guide:"The AP broadcasts corporate and guest SSIDs. Each maps to a VLAN so guest traffic is isolated."
+  },
+  {
+    id:"pc1", name:"PC \u2014 Engineering", type:"client", color:"#94a3b8", emoji:"\uD83D\uDCBB",
+    x:620, y:585, status:"up",
+    desc:"Employee workstation on the Engineering VLAN. Gets IP via DHCP.",
+    specs:{"OS":"Windows 11","IP":"10.0.20.100/24 (DHCP)","Gateway":"10.0.20.1","VLAN":"20 (Engineering)","DNS":"10.0.10.5"},
+    commands:[
+      {title:"Check IP config",desc:"Verify DHCP assignment.",cmd:"ipconfig /all"},
+      {title:"Ping gateway",desc:"Confirm LAN connectivity.",cmd:"ping 10.0.20.1"},
+      {title:"Ping Internet",desc:"Confirm Internet access.",cmd:"ping 8.8.8.8"},
+      {title:"DNS test",desc:"Verify name resolution.",cmd:"nslookup google.com"},
+      {title:"Trace route",desc:"See the full path to the Internet.",cmd:"tracert 8.8.8.8"}
+    ],
+    guide:"Client PCs are the endpoints. Use ipconfig, ping, and tracert to verify connectivity."
+  },
+  {
+    id:"pc2", name:"PC \u2014 HR / Admin", type:"client", color:"#94a3b8", emoji:"\uD83D\uDCBB",
+    x:760, y:585, status:"up",
+    desc:"HR workstation on VLAN 30. Isolated from Engineering for security.",
+    specs:{"OS":"Windows 11","IP":"10.0.30.100/24 (DHCP)","Gateway":"10.0.30.1","VLAN":"30 (HR)","DNS":"10.0.10.5"},
+    commands:[
+      {title:"Check IP config",desc:"Verify HR subnet address.",cmd:"ipconfig /all"},
+      {title:"Ping gateway",desc:"Confirm HR VLAN gateway.",cmd:"ping 10.0.30.1"},
+      {title:"Test VLAN isolation",desc:"Ping Engineering \u2014 should fail if ACLs are set.",cmd:"ping 10.0.20.100"},
+      {title:"Test Internet",desc:"Confirm Internet access.",cmd:"ping 8.8.8.8"}
+    ],
+    guide:"This PC is on a different VLAN from Engineering. VLAN separation ensures HR and Engineering traffic stays isolated."
+  }
+];
+
+/* Topology links */
+var links = [
+  ["internet","edge-router"],
+  ["edge-router","firewall"],
+  ["firewall","core-switch"],
+  ["core-switch","load-balancer"],
+  ["load-balancer","web-server1"],
+  ["load-balancer","web-server2"],
+  ["core-switch","access-switch1"],
+  ["core-switch","access-switch2"],
+  ["access-switch2","access-point"],
+  ["access-switch1","pc1"],
+  ["access-switch1","pc2"]
+];
+
+var deviceMap = {};
+devices.forEach(function(d){ deviceMap[d.id] = d; });
+
+/* ── Render sidebar ── */
+function renderSidebar(){
+  var list = document.getElementById("deviceList");
+  list.innerHTML = devices.filter(function(d){ return d.id !== "internet"; }).map(function(d){
+    return '<li data-id="'+d.id+'" onclick="selectDevice(\''+d.id+'\')">' +
+      '<div class="icon" style="background:'+d.color+'22;color:'+d.color+'">'+d.emoji+'</div>' +
+      '<div class="info"><div class="name">'+d.name+'</div><div class="type">'+d.type+'</div></div>' +
+      (d.status ? '<div class="status-dot '+d.status+'"></div>' : '') +
+      '</li>';
+  }).join("");
+}
+
+/* ── Render topology SVG ── */
+function renderTopology(){
+  var svg = document.getElementById("topoSvg");
+  var html = '<defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+
+  // links
+  links.forEach(function(pair){
+    var a = deviceMap[pair[0]], b = deviceMap[pair[1]];
+    html += '<line class="topo-link" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'"/>';
+  });
+
+  // nodes
+  devices.forEach(function(d){
+    var shape;
+    switch(d.type){
+      case "cloud":       shape='<ellipse cx="'+d.x+'" cy="'+d.y+'" rx="50" ry="22" fill="#1e293b" stroke="'+d.color+'" stroke-width="2"/>'; break;
+      case "router":      shape='<circle cx="'+d.x+'" cy="'+d.y+'" r="26" fill="#0f172a" stroke="'+d.color+'" stroke-width="2.5"/>'; break;
+      case "firewall":    shape='<rect x="'+(d.x-28)+'" y="'+(d.y-22)+'" width="56" height="44" rx="6" fill="#0f172a" stroke="'+d.color+'" stroke-width="2.5" stroke-dasharray="4 2"/>'; break;
+      case "switch":      shape='<rect x="'+(d.x-30)+'" y="'+(d.y-18)+'" width="60" height="36" rx="4" fill="#0f172a" stroke="'+d.color+'" stroke-width="2"/>'; break;
+      case "loadbalancer": shape='<polygon points="'+d.x+','+(d.y-24)+' '+(d.x+28)+','+(d.y+16)+' '+(d.x-28)+','+(d.y+16)+'" fill="#0f172a" stroke="'+d.color+'" stroke-width="2.5"/>'; break;
+      case "server":      shape='<rect x="'+(d.x-22)+'" y="'+(d.y-18)+'" width="44" height="36" rx="4" fill="#0f172a" stroke="'+d.color+'" stroke-width="2"/>'; break;
+      case "ap":          shape='<circle cx="'+d.x+'" cy="'+d.y+'" r="22" fill="#0f172a" stroke="'+d.color+'" stroke-width="2"/><circle cx="'+d.x+'" cy="'+d.y+'" r="30" fill="none" stroke="'+d.color+'" stroke-width="1" opacity=".3"/><circle cx="'+d.x+'" cy="'+d.y+'" r="38" fill="none" stroke="'+d.color+'" stroke-width="1" opacity=".15"/>'; break;
+      default:            shape='<rect x="'+(d.x-18)+'" y="'+(d.y-14)+'" width="36" height="28" rx="4" fill="#0f172a" stroke="'+d.color+'" stroke-width="1.5"/><line x1="'+(d.x-10)+'" y1="'+(d.y+14)+'" x2="'+(d.x+10)+'" y2="'+(d.y+14)+'" stroke="'+d.color+'" stroke-width="1.5"/>'; break;
+    }
+    var labelY = d.y + (d.type==="cloud"?38 : d.type==="ap"?52 : d.type==="client"?35 : 42);
+    html += '<g class="topo-node" data-id="'+d.id+'" onclick="selectDevice(\''+d.id+'\')" onmouseenter="showTooltip(event,\''+d.id+'\')" onmouseleave="hideTooltip()">';
+    html += shape;
+    html += '<text class="topo-label" x="'+d.x+'" y="'+(d.y+4)+'" font-size="14">'+d.emoji+'</text>';
+    html += '<text class="topo-label" x="'+d.x+'" y="'+labelY+'">'+d.name+'</text>';
+    html += '</g>';
+  });
+
+  svg.innerHTML = html;
+}
+
+/* ── Tooltip ── */
+function showTooltip(e, id){
+  var d = deviceMap[id], tip = document.getElementById("tooltip");
+  tip.innerHTML = "<strong>"+d.name+"</strong><br><span style='color:var(--muted)'>"+d.type.toUpperCase()+"</span><br><span style='font-size:.7rem;color:var(--muted)'>"+d.desc.substring(0,100)+"\u2026</span>";
+  tip.style.display = "block";
+  tip.style.left = (e.clientX+12)+"px";
+  tip.style.top = (e.clientY+12)+"px";
+}
+function hideTooltip(){ document.getElementById("tooltip").style.display = "none"; }
+
+/* ── Select device ── */
+var selectedDevice = null;
+var terminalHistory = {};
+
+function selectDevice(id){
+  selectedDevice = id;
+  var d = deviceMap[id], panel = document.getElementById("configPanel");
+  panel.classList.remove("collapsed");
+  document.getElementById("cfgIcon").style.background = d.color+"22";
+  document.getElementById("cfgIcon").style.color = d.color;
+  document.getElementById("cfgIcon").textContent = d.emoji;
+  document.getElementById("cfgName").textContent = d.name;
+  var sub = d.type.toUpperCase();
+  if(d.specs && d.specs["Mgmt IP"]) sub += " \u2014 "+d.specs["Mgmt IP"];
+  else if(d.specs && d.specs.IP) sub += " \u2014 "+d.specs.IP;
+  document.getElementById("cfgType").textContent = sub;
+  document.querySelectorAll(".device-list li").forEach(function(li){ li.classList.toggle("active", li.dataset.id===id); });
+  document.querySelectorAll(".topo-node").forEach(function(n){ n.classList.toggle("selected", n.dataset.id===id); });
+  document.querySelectorAll(".config-tabs button").forEach(function(b,i){ b.classList.toggle("active",i===0); });
+  showInfoView();
+}
+
+function closeConfig(){
+  document.getElementById("configPanel").classList.add("collapsed");
+  document.querySelectorAll(".device-list li").forEach(function(li){ li.classList.remove("active"); });
+  document.querySelectorAll(".topo-node").forEach(function(n){ n.classList.remove("selected"); });
+  selectedDevice = null;
+}
+
+function switchConfigTab(btn,tab){
+  document.querySelectorAll(".config-tabs button").forEach(function(b){ b.classList.remove("active"); });
+  btn.classList.add("active");
+  if(tab==="split"){ showSplitView(); }
+  else { showInfoView(); }
+}
+
+function showInfoView(){
+  document.getElementById("cfgBody").classList.add("active");
+  document.getElementById("cfgSplit").classList.remove("active");
+  renderConfigTab("info");
+}
+
+function showSplitView(){
+  document.getElementById("cfgBody").classList.remove("active");
+  document.getElementById("cfgSplit").classList.add("active");
+  renderSplitCommands();
+  renderSplitTerminal();
+}
+
+function renderSplitCommands(){
+  var d = deviceMap[selectedDevice], el = document.getElementById("splitCmds");
+  if(!d.commands || d.commands.length===0){
+    el.innerHTML = '<div class="info-card"><h4>No Commands</h4><p>This node does not have configurable commands.</p></div>';
+    return;
+  }
+  el.innerHTML =
+    '<div class="info-card"><h4>\uD83D\uDCCB Configuration Guide</h4><p>Click any command block to run it in the terminal below.</p></div>' +
+    '<div class="cmd-guide">' +
+    d.commands.map(function(c,i){
+      return '<div class="cmd-step">' +
+        '<div class="step-title"><span class="step-num">'+(i+1)+'</span> '+c.title+'</div>' +
+        '<div class="step-desc">'+c.desc+'</div>' +
+        '<div class="cmd-block" onclick="runCmdSplit(\''+selectedDevice+'\','+i+')">' + esc(c.cmd) + '</div>' +
+        '</div>';
+    }).join("") + '</div>';
+}
+
+function renderSplitTerminal(){
+  var d = deviceMap[selectedDevice], el = document.getElementById("splitTerm");
+  if(!terminalHistory[d.id]){
+    terminalHistory[d.id] = [
+      {type:"comment",text:"# "+d.name+" \u2014 Interactive Terminal"},
+      {type:"comment",text:'# Type commands or click steps above'},
+      {type:"comment",text:'# Type "help" for available commands'},
+      {type:"output",text:""}
+    ];
+  }
+  var pr = getPrompt(d);
+  var hHtml = terminalHistory[d.id].map(function(h){
+    if(h.type==="comment") return '<div class="comment">'+esc(h.text)+'</div>';
+    if(h.type==="cmd") return '<div><span class="prompt">'+esc(pr)+'</span> <span class="cmd">'+esc(h.text)+'</span></div>';
+    if(h.type==="output") return '<div class="output">'+esc(h.text)+'</div>';
+    if(h.type==="highlight") return '<div class="highlight">'+esc(h.text)+'</div>';
+    return "";
+  }).join("");
+  el.innerHTML =
+    '<div class="terminal-box">' +
+    '<div class="terminal-header"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><span>'+d.name+' \u2014 CLI</span></div>' +
+    '<div class="terminal-output" id="termOutput">'+hHtml+'</div>' +
+    '<div class="terminal-input-wrap"><span class="prompt-char">'+esc(pr)+'</span>' +
+    '<input class="terminal-input" id="termInput" autofocus placeholder="Type a command..." onkeydown="if(event.key===\'Enter\')execTermCmdSplit()">' +
+    '</div></div>';
+  setTimeout(function(){
+    var out = document.getElementById("termOutput");
+    if(out) out.scrollTop = out.scrollHeight;
+    var inp = document.getElementById("termInput");
+    if(inp) inp.focus();
+  },50);
+}
+
+function execTermCmdSplit(){
+  var inp = document.getElementById("termInput");
+  var cmd = inp.value.trim();
+  if(!cmd) return;
+  inp.value = "";
+  var d = deviceMap[selectedDevice];
+  terminalHistory[d.id].push({type:"cmd",text:cmd});
+  var output = simulateCommand(d, cmd);
+  if(output) terminalHistory[d.id].push({type:"output",text:output});
+  renderSplitTerminal();
+}
+
+function runCmdSplit(deviceId, stepIndex){
+  selectedDevice = deviceId;
+  var d = deviceMap[deviceId];
+  if(!terminalHistory[d.id]){
+    terminalHistory[d.id] = [{type:"comment",text:"# "+d.name+" \u2014 Terminal"}];
+  }
+  terminalHistory[d.id].push({type:"highlight",text:"\n\u2500\u2500 Step "+(stepIndex+1)+": "+d.commands[stepIndex].title+" \u2500\u2500"});
+  d.commands[stepIndex].cmd.split("\n").forEach(function(line){
+    if(line.charAt(0)==="#"||line.substring(0,2)==="//"||line.substring(0,2)==="::"){
+      terminalHistory[d.id].push({type:"comment",text:line});
+    } else {
+      terminalHistory[d.id].push({type:"cmd",text:line});
+      var out = simulateCommand(d, line);
+      if(out) terminalHistory[d.id].push({type:"output",text:out});
+    }
+  });
+  terminalHistory[d.id].push({type:"highlight",text:"\u2713 Step "+(stepIndex+1)+" complete.\n"});
+  renderSplitTerminal();
+}
+
+function esc(str){
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderConfigTab(tab){
+  var d = deviceMap[selectedDevice], body = document.getElementById("cfgBody");
+
+  if(tab === "info"){
+    var specsHtml = "";
+    if(d.specs){
+      specsHtml = '<div class="info-card"><h4>Specifications</h4><table>' +
+        Object.keys(d.specs).map(function(k){ return '<tr><th>'+k+'</th><td>'+d.specs[k]+'</td></tr>'; }).join("") +
+        '</table></div>';
+    }
+    body.innerHTML =
+      '<div class="info-card"><h4>About This Device</h4><p>'+d.desc+'</p></div>' +
+      specsHtml +
+      '<div class="info-card"><h4>\uD83D\uDCA1 Quick Tip</h4><p>'+d.guide+'</p></div>';
+  }
+}
+
+/* ── Terminal ── */
+function getPrompt(d){
+  var names = {"edge-router":"EdgeRouter","firewall":"ASA-FW","core-switch":"CoreSwitch","access-switch1":"AccSwitch-F1","access-switch2":"AccSwitch-F2"};
+  if(d.type==="router"||d.type==="firewall"||d.type==="switch") return (names[d.id]||d.name.split(" ")[0])+"#";
+  if(d.type==="server"||d.type==="loadbalancer"||d.type==="ap") return "admin@"+d.id+":~$";
+  return "C:\\>";
+}
+
+function runCommandInTerminal(deviceId, stepIndex){
+  selectedDevice = deviceId;
+  var d = deviceMap[deviceId];
+  if(!terminalHistory[d.id]){
+    terminalHistory[d.id] = [{type:"comment",text:"# "+d.name+" \u2014 Terminal"}];
+  }
+  terminalHistory[d.id].push({type:"highlight",text:"\n\u2500\u2500 Step "+(stepIndex+1)+": "+d.commands[stepIndex].title+" \u2500\u2500"});
+  d.commands[stepIndex].cmd.split("\n").forEach(function(line){
+    if(line.charAt(0)==="#"||line.substring(0,2)==="//"||line.substring(0,2)==="::"){
+      terminalHistory[d.id].push({type:"comment",text:line});
+    } else {
+      terminalHistory[d.id].push({type:"cmd",text:line});
+      var out = simulateCommand(d, line);
+      if(out) terminalHistory[d.id].push({type:"output",text:out});
+    }
+  });
+  terminalHistory[d.id].push({type:"highlight",text:"\u2713 Step "+(stepIndex+1)+" complete.\n"});
+
+  // If in split view, just refresh the terminal pane
+  if(document.getElementById("cfgSplit").classList.contains("active")){
+    renderSplitTerminal();
+    return;
+  }
+  document.querySelectorAll(".config-tabs button").forEach(function(b,i){ b.classList.toggle("active",i===1); });
+  showSplitView();
+}
+
+/* ── Command simulator ── */
+function simulateCommand(d, cmd){
+  var c = cmd.toLowerCase().trim();
+  if(c==="help"||c==="?") return "Available: show running-config, show ip interface brief,\nshow vlan brief, ping <ip>, enable, configure terminal,\nhostname <name>, interface <name>, ip address <ip> <mask>,\nno shutdown, exit, write memory, clear, show version,\nshow ip route, show interfaces status";
+  if(c==="clear"){ terminalHistory[d.id]=[]; return null; }
+  if(c==="enable") return "";
+  if(c==="configure terminal"||c==="conf t") return "Enter configuration commands, one per line. End with CNTL/Z.";
+  if(c.indexOf("hostname ")===0) return "";
+  if(c.indexOf("interface ")===0) return "";
+  if(c.indexOf("ip address")>=0) return "";
+  if(c==="no shutdown"||c===" no shutdown") return "%LINK-3-UPDOWN: Interface is up";
+  if(c.indexOf("switchport")>=0) return "";
+  if(c.indexOf("vlan ")===0) return "";
+  if(c.indexOf("name ")===0) return "";
+  if(c==="exit"||c==="end") return "";
+  if(c.indexOf("ip route")===0||c.indexOf("ip routing")===0||c.indexOf("ip nat")===0||c.indexOf("ip default-gateway")===0) return "";
+  if(c.indexOf("access-list")===0||c.indexOf("access-group")===0) return "";
+  if(c.indexOf("route ")===0) return "";
+  if(c.indexOf("logging ")===0) return "";
+  if(c.indexOf("nameif")>=0||c.indexOf("security-level")>=0) return "";
+  if(c.indexOf("spanning-tree")>=0) return "";
+  if(c==="write memory"||c==="wr"||c==="copy running-config startup-config") return "[OK] Configuration saved to NVRAM.";
+  if(c==="show version") return "Cisco IOS Software, Version 16.9.4\n"+d.name+" uptime is 14 days, 3 hours\nSystem image file is \"flash:packages.conf\"";
+  if(c==="show running-config"||c==="show run"){
+    var lines = (d.commands||[]).map(function(cm){ return cm.cmd; }).join("\n");
+    return "Building configuration...\n\nCurrent configuration:\n!\nhostname "+d.name.split(" ")[0]+"\n!\n"+lines+"\n!\nend";
+  }
+  if(c==="show ip interface brief"||c==="sh ip int br"){
+    if(d.type==="router") return "Interface          IP-Address      Status    Protocol\nGi0/0              203.0.113.2     up        up\nGi0/1              192.168.1.1     up        up";
+    if(d.type==="firewall") return "Interface          IP-Address      Status    Protocol\nGi1/1 (outside)    192.168.1.2     up        up\nGi1/2 (inside)     10.0.0.1        up        up";
+    if(d.type==="switch") return "Interface          IP-Address      Status    Protocol\nVlan10             10.0.10.1       up        up\nVlan20             10.0.20.1       up        up\nVlan30             10.0.30.1       up        up\nGi1/0/1            unassigned      up        up";
+    return "Interface          IP-Address      Status    Protocol\neth0               "+(d.specs&&d.specs.IP||"DHCP")+"  up        up";
+  }
+  if(c==="show vlan brief") return "VLAN Name                    Status    Ports\n---- ----------------------- --------- ----------\n1    default                 active    Gi1/0/20-48\n10   SERVERS                 active    \n20   ENGINEERING             active    Fa0/2-12\n30   HR-ADMIN                active    Fa0/13-20\n40   WIFI-GUEST              active    Fa0/24";
+  if(c==="show ip route") return "Gateway of last resort is 192.168.1.1\n\nS*   0.0.0.0/0 [1/0] via 192.168.1.1\nC    10.0.10.0/24 is directly connected, Vlan10\nC    10.0.20.0/24 is directly connected, Vlan20\nC    10.0.30.0/24 is directly connected, Vlan30\nC    192.168.1.0/24 is directly connected, Gi0/0";
+  if(c==="show interfaces status") return "Port      Name          Status       Vlan  Speed\nGi0/1     Uplink        connected    trunk 1Gbps\nFa0/2     Eng-Desk1     connected    20    100Mbps\nFa0/13    HR-Desk1      connected    30    100Mbps\nFa0/24    AP-Uplink     connected    trunk 100Mbps";
+  if(c.indexOf("ping ")===0){
+    var tgt = c.substring(5).trim();
+    return "Pinging "+tgt+" with 32 bytes of data:\nReply from "+tgt+": bytes=32 time=1ms TTL=64\nReply from "+tgt+": bytes=32 time=1ms TTL=64\nReply from "+tgt+": bytes=32 time<1ms TTL=64\nReply from "+tgt+": bytes=32 time=1ms TTL=64\n\nPackets: Sent = 4, Received = 4, Lost = 0 (0% loss)";
+  }
+  if(c.indexOf("tracert ")===0||c.indexOf("traceroute ")===0){
+    var t = c.split(" ")[1];
+    return "Tracing route to "+t+":\n  1   <1ms   10.0.20.1      (Core Switch)\n  2    1ms   10.0.0.1       (Firewall)\n  3    1ms   192.168.1.1    (Edge Router)\n  4    5ms   203.0.113.1    (ISP Gateway)\n  5   12ms   "+t+"\n\nTrace complete.";
+  }
+  if(c==="ipconfig /all"||c==="ipconfig") return "Windows IP Configuration\n\n   Host Name . . . . . . : "+d.name.replace(/\s/g,"-")+"\n   IPv4 Address. . . . . : "+(d.specs&&d.specs.IP?d.specs.IP.split("/")[0]:"10.0.20.100")+"\n   Subnet Mask . . . . . : 255.255.255.0\n   Default Gateway . . . : "+(d.specs&&d.specs.Gateway||"10.0.20.1")+"\n   DNS Servers . . . . . : "+(d.specs&&d.specs.DNS||"10.0.10.5");
+  if(c.indexOf("nslookup ")===0){
+    var dom = c.split(" ")[1];
+    return "Server:    10.0.10.5\nAddress:   10.0.10.5#53\n\nNon-authoritative answer:\nName:  "+dom+"\nAddress: 142.250.80.46";
+  }
+  if(c.indexOf("sudo ")===0||c.indexOf("curl ")===0||c.indexOf("systemctl ")===0){
+    if(c.indexOf("apt update")>=0) return "Hit:1 http://archive.ubuntu.com jammy InRelease\nReading package lists... Done";
+    if(c.indexOf("apt install")>=0) return "Reading package lists... Done\nSetting up package... Done";
+    if(c.indexOf("status")>=0) return "\u25CF service is active (running)\n   Active: active (running) since Mon 2026-03-23\n   Main PID: 1234";
+    if(c.indexOf("enable")>=0) return "Synchronizing state... enabled.";
+    if(c.indexOf("start")>=0) return "";
+    if(c.indexOf("curl")>=0) return "<html><body><h1>Welcome to Nginx!</h1></body></html>";
+    return "";
+  }
+  if(c.indexOf("ssh ")===0) return "Connected to "+(c.split("@")[1]||"device")+".\nWelcome to "+d.name+".";
+  if(c.indexOf("dot11")>=0||c.indexOf("authentication")>=0||c.indexOf("wpa-psk")>=0||c==="guest-mode") return "";
+  if(c.indexOf("frontend")===0||c.indexOf("backend")===0||c.indexOf("balance")===0||c.indexOf("option")===0||c.indexOf("server ")===0||c.indexOf("default_backend")===0) return "";
+  if(c.indexOf("netplan")>=0) return "Configuration applied.";
+  if(c.indexOf("bind")>=0) return "";
+  if(c.indexOf("network:")===0||c.charAt(0)===" ") return "";
+  return '% Unknown command: "'+cmd+'"\nType "help" or "?" for a list of commands.';
+}
+
+/* ── View toggle ── */
+function showView(view){
+  document.querySelectorAll(".header-tabs button").forEach(function(b){ b.classList.remove("active"); });
+  event.target.classList.add("active");
+  var tv = document.getElementById("topoView"), gv = document.getElementById("guideView");
+  var sb = document.getElementById("sidebar-topo"), cp = document.getElementById("configPanel");
+  if(view==="topology"){ tv.style.display=""; gv.classList.remove("active"); sb.style.display=""; cp.style.display=""; }
+  else { tv.style.display="none"; gv.classList.add("active"); sb.style.display="none"; cp.style.display="none"; }
+}
+
+/* ── Split-pane resize ── */
+(function(){
+  var divider = document.getElementById("splitDivider");
+  var startY, startTopH;
+  divider.addEventListener("mousedown", function(e){
+    e.preventDefault();
+    var cmds = document.getElementById("splitCmds");
+    startY = e.clientY;
+    startTopH = cmds.getBoundingClientRect().height;
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+  function onMove(e){
+    var cmds = document.getElementById("splitCmds");
+    var newH = startTopH + (e.clientY - startY);
+    if(newH < 80) newH = 80;
+    cmds.style.flex = "0 0 " + newH + "px";
+  }
+  function onUp(){ document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); }
+})();
+
+/* ── Init ── */
+renderSidebar();
+renderTopology();
+</script>
+</body>
+</html>

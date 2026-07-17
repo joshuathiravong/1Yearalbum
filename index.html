@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy 1 Year Anniversary my Love — A Photo Album</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <!-- ===================== COVER PAGE ===================== -->
+  <section id="cover" class="cover">
+    <div class="cover-content">
+      <div class="cover-ornament top">&hearts;</div>
+      <h1 class="cover-title">Happy 1 Year Anniversary my Love</h1>
+      <div class="cover-divider"></div>
+      <p class="cover-names">
+        <!-- ✏️  Replace with your names -->
+        <span>Joshua</span> &amp; <span>Aline</span>
+      </p>
+      <p class="cover-date">
+        <!-- ✏️  Replace with your anniversary or start date -->
+        Together since July 26, 2025
+      </p>
+      <button class="open-album-btn" onclick="document.getElementById('album').scrollIntoView({behavior:'smooth'})">
+        Open Album &darr;
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================== FLIPBOOK ALBUM ===================== -->
+  <main id="album" class="album">
+    <div class="book-wrapper">
+      <div class="book" id="book">
+        <div class="book-left" id="book-left"></div>
+        <div class="book-right" id="book-right"></div>
+      </div>
+
+      <!-- Hidden page data -->
+      <div id="page-data" style="display:none;">
+        <!-- Spread 0: Cover -->
+        <div class="spread" data-left-type="title" data-right-type="title">
+          <div class="left-content">
+            <div class="page-section-title final-page">
+              <h2>1 Year of Our Love</h2>
+              <p>A collection of the past year together</p>
+              <div class="heart">&hearts;</div>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-1.jpg" alt="Photo 1" />
+              <p class="page-caption">Photo 1</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 1 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-2.jpg" alt="Photo 2" />
+              <p class="page-caption">Photo 2</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-3.jpg" alt="Photo 3" />
+              <p class="page-caption">Photo 3</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 2 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-4.jpg" alt="Photo 4" />
+              <p class="page-caption">Photo 4</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-video">
+              <video src="photos/video-1.mp4" controls playsinline></video>
+              <p class="page-caption">Video 1</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 3 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-6.jpg" alt="Photo 6" />
+              <p class="page-caption">Photo 6</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-video">
+              <video src="photos/video-2.mp4" controls playsinline></video>
+              <p class="page-caption">Video 2</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 4 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-8.jpg" alt="Photo 8" />
+              <p class="page-caption">Photo 8</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-9.jpg" alt="Photo 9" />
+              <p class="page-caption">Photo 9</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 5 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-10.jpg" alt="Photo 10" />
+              <p class="page-caption">Photo 10</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-video">
+              <video src="photos/video-3.mp4" controls playsinline></video>
+              <p class="page-caption">Video 3</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 6 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-12.jpg" alt="Photo 12" />
+              <p class="page-caption">Photo 12</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-13.jpg" alt="Photo 13" />
+              <p class="page-caption">Photo 13</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 7 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-14.jpg" alt="Photo 14" />
+              <p class="page-caption">Photo 14</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-15.jpg" alt="Photo 15" />
+              <p class="page-caption">Photo 15</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 8 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-16.jpg" alt="Photo 16" />
+              <p class="page-caption">Photo 16</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-17.jpg" alt="Photo 17" />
+              <p class="page-caption">Photo 17</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 9 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-18.jpg" alt="Photo 18" />
+              <p class="page-caption">Photo 18</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-19.jpg" alt="Photo 19" />
+              <p class="page-caption">Photo 19</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 10 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-20.jpg" alt="Photo 20" />
+              <p class="page-caption">Photo 20</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-21.jpg" alt="Photo 21" />
+              <p class="page-caption">Photo 21</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 11 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-22.jpg" alt="Photo 22" />
+              <p class="page-caption">Photo 22</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-video">
+              <video src="photos/video-4.mp4" controls playsinline></video>
+              <p class="page-caption">Video 4</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 12 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-24.jpg" alt="Photo 24" />
+              <p class="page-caption">Photo 24</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-25.jpg" alt="Photo 25" />
+              <p class="page-caption">Photo 25</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 13 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-26.jpg" alt="Photo 26" />
+              <p class="page-caption">Photo 26</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-27.jpg" alt="Photo 27" />
+              <p class="page-caption">Photo 27</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 14 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-28.jpg" alt="Photo 28" />
+              <p class="page-caption">Photo 28</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-29.jpg" alt="Photo 29" />
+              <p class="page-caption">Photo 29</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 15 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-30.jpg" alt="Photo 30" />
+              <p class="page-caption">Photo 30</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-31.jpg" alt="Photo 31" />
+              <p class="page-caption">Photo 31</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 16 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-32.jpg" alt="Photo 32" />
+              <p class="page-caption">Photo 32</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-33.jpg" alt="Photo 33" />
+              <p class="page-caption">Photo 33</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 17 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-34.jpg" alt="Photo 34" />
+              <p class="page-caption">Photo 34</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-35.jpg" alt="Photo 35" />
+              <p class="page-caption">Photo 35</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 18 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-36.jpg" alt="Photo 36" />
+              <p class="page-caption">Photo 36</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-37.jpg" alt="Photo 37" />
+              <p class="page-caption">Photo 37</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 19 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-38.jpg" alt="Photo 38" />
+              <p class="page-caption">Photo 38</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-39.jpg" alt="Photo 39" />
+              <p class="page-caption">Photo 39</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 20 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-40.jpg" alt="Photo 40" />
+              <p class="page-caption">Photo 40</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-41.jpg" alt="Photo 41" />
+              <p class="page-caption">Photo 41</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 21 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-42.jpg" alt="Photo 42" />
+              <p class="page-caption">Photo 42</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-43.jpg" alt="Photo 43" />
+              <p class="page-caption">Photo 43</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 22 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-44.jpg" alt="Photo 44" />
+              <p class="page-caption">Photo 44</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-45.jpg" alt="Photo 45" />
+              <p class="page-caption">Photo 45</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 23 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-46.jpg" alt="Photo 46" />
+              <p class="page-caption">Photo 46</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-47.jpg" alt="Photo 47" />
+              <p class="page-caption">Photo 47</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 24 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-48.jpg" alt="Photo 48" />
+              <p class="page-caption">Photo 48</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-49.jpg" alt="Photo 49" />
+              <p class="page-caption">Photo 49</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 25 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-50.jpg" alt="Photo 50" />
+              <p class="page-caption">Photo 50</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-51.jpg" alt="Photo 51" />
+              <p class="page-caption">Photo 51</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 26 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-52.jpg" alt="Photo 52" />
+              <p class="page-caption">Photo 52</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-53.jpg" alt="Photo 53" />
+              <p class="page-caption">Photo 53</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 27 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-54.jpg" alt="Photo 54" />
+              <p class="page-caption">Photo 54</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-55.jpg" alt="Photo 55" />
+              <p class="page-caption">Photo 55</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 28 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-video">
+              <video src="photos/video-5.mp4" controls playsinline></video>
+              <p class="page-caption">Video 5</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-57.jpg" alt="Photo 57" />
+              <p class="page-caption">Photo 57</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 29 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-58.jpg" alt="Photo 58" />
+              <p class="page-caption">Photo 58</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-59.jpg" alt="Photo 59" />
+              <p class="page-caption">Photo 59</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 30 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-60.jpg" alt="Photo 60" />
+              <p class="page-caption">Photo 60</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-61.jpg" alt="Photo 61" />
+              <p class="page-caption">Photo 61</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 31 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-62.jpg" alt="Photo 62" />
+              <p class="page-caption">Photo 62</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-63.jpg" alt="Photo 63" />
+              <p class="page-caption">Photo 63</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 32 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-64.jpg" alt="Photo 64" />
+              <p class="page-caption">Photo 64</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-65.jpg" alt="Photo 65" />
+              <p class="page-caption">Photo 65</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 33 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-66.jpg" alt="Photo 66" />
+              <p class="page-caption">Photo 66</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-67.jpg" alt="Photo 67" />
+              <p class="page-caption">Photo 67</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 34 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-68.jpg" alt="Photo 68" />
+              <p class="page-caption">Photo 68</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-69.jpg" alt="Photo 69" />
+              <p class="page-caption">Photo 69</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 35 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-70.jpg" alt="Photo 70" />
+              <p class="page-caption">Photo 70</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-71.jpg" alt="Photo 71" />
+              <p class="page-caption">Photo 71</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 36 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-72.jpg" alt="Photo 72" />
+              <p class="page-caption">Photo 72</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-73.jpg" alt="Photo 73" />
+              <p class="page-caption">Photo 73</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 37 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-74.jpg" alt="Photo 74" />
+              <p class="page-caption">Photo 74</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-75.jpg" alt="Photo 75" />
+              <p class="page-caption">Photo 75</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 38 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-76.jpg" alt="Photo 76" />
+              <p class="page-caption">Photo 76</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-77.jpg" alt="Photo 77" />
+              <p class="page-caption">Photo 77</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 39 -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-78.jpg" alt="Photo 78" />
+              <p class="page-caption">Photo 78</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-photo" onclick="openLightbox(this)">
+              <img src="photos/photo-79.jpg" alt="Photo 79" />
+              <p class="page-caption">Photo 79</p>
+            </div>
+          </div>
+        </div>
+        <!-- Spread 40: Final -->
+        <div class="spread">
+          <div class="left-content">
+            <div class="page-section-title">
+              <p class="back-cover-text">&#10053; Honorable Mentions &#10053;</p>
+            </div>
+          </div>
+          <div class="right-content">
+            <div class="page-section-title final-page">
+              <h2>To Be Continued&hellip;</h2>
+              <p>Every day with you is a new page in our story.</p>
+              <div class="heart">&hearts;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Book navigation -->
+      <div class="book-nav">
+        <button class="book-btn" id="prev-btn" onclick="flipPrev()">&#8249; Previous</button>
+        <span class="book-page-num" id="page-num">Page 1</span>
+        <button class="book-btn" id="next-btn" onclick="flipNext()">Next &#8250;</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== LIGHTBOX ===================== -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox(event)">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <button class="lightbox-prev" aria-label="Previous" onclick="navLightbox(event, -1)">&#8249;</button>
+    <div class="lightbox-content">
+      <img id="lightbox-img" src="" alt="" />
+      <p id="lightbox-caption"></p>
+    </div>
+    <button class="lightbox-next" aria-label="Next" onclick="navLightbox(event, 1)">&#8250;</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
