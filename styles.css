@@ -328,12 +328,6 @@ img {
   background: #1a1520;
 }
 
-.page-photo img.rotate-right-90 {
-  transform: rotate(90deg);
-  max-width: 78%;
-  max-height: 100%;
-}
-
 .page-caption {
   text-align: center;
   padding-top: 1rem;
