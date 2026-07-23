@@ -271,6 +271,43 @@ img {
   letter-spacing: 0.2em;
 }
 
+.page-letter {
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+  overflow-y: auto;
+  color: #e8dcc8;
+  line-height: 1.5;
+}
+
+.page-letter h3,
+.page-letter h4,
+.page-letter h5 {
+  font-family: "Playfair Display", Georgia, serif;
+  color: #d4a650;
+  margin-bottom: 0.6rem;
+}
+
+.page-letter h3 {
+  font-size: 1.5rem;
+}
+
+.page-letter h4 {
+  font-size: 1.15rem;
+  margin-top: 1rem;
+}
+
+.page-letter h5 {
+  font-size: 1rem;
+  margin-top: 0.8rem;
+}
+
+.page-letter p {
+  margin-bottom: 0.7rem;
+  color: #d8c8ad;
+  font-size: 0.95rem;
+}
+
 /* ---------- Photo Pages ---------- */
 .page-photo {
   width: 100%;
