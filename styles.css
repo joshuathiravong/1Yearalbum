@@ -449,6 +449,10 @@ img {
   transition: transform 0.3s ease;
 }
 
+.lightbox-content img.rotate-right-90 {
+  transform: rotate(90deg);
+}
+
 .lightbox-content p {
   color: #e0d0c0;
   font-style: italic;

@@ -88,6 +88,7 @@ function showPhoto(index) {
   var caption = photo.querySelector(".page-caption");
   lightboxImg.src = img.src;
   lightboxImg.alt = img.alt;
+  lightboxImg.classList.toggle("rotate-right-90", img.classList.contains("rotate-right-90"));
   lightboxCap.textContent = caption ? caption.textContent : "";
 }
 
